@@ -23,17 +23,18 @@ from itertools import product
 # 5. Please set up your code to be run and save the results to the directory that its executed from
 # 6. Investigate grid search function
  
-M = np.array([[1,2],[3,4],[4,5],[4,5],[4,5],[4,5],[4,5],[4,5]])
-# L = np.ones(M.shape[0])
-L = np.random.choice([0,1], size=(M.shape[0],), p=[1./3, 2./3])
-n_folds = 5
+# M = np.array([[1,2],[3,4],[4,5],[4,5],[4,5],[4,5],[4,5],[4,5]])
+# # L = np.ones(M.shape[0])
+# L = np.random.choice([0,1], size=(M.shape[0],), p=[1./3, 2./3])
+# n_folds = 5
  
-data = (M, L, n_folds)
+# data = (M, L, n_folds)
 
 ### Keep erroring out on data set, using IRIS data set for testing
 iris = datasets.load_iris()
 M = iris.data[:, :2] #taking the first two features, following example on sklearn website
 L = iris.target
+n_folds = 5
 data = (M, L, n_folds)
  
 def run(a_clf, data, clf_hyper={}):
@@ -58,21 +59,18 @@ results = run(RandomForestClassifier, data, clf_hyper={})
 
 
 testInput = [
-[LogisticRegression, {'C': [1.0], 'solver': ['lbfgs'], 'tol' : [1e-3]}],
-[RandomForestClassifier, {}],
-[SVC, {'C': [1.1, 0.5], 'kernel': ['rbf'], 'tol': [1e-4], }]
+{'clf': [LogisticRegression], 'C': [1.0], 'solver': ['lbfgs'], 'tol' : [1e-3]},
+{'clf': [RandomForestClassifier]},
+{'clf': [SVC], 'C': [1.1, 0.5], 'kernel': ['rbf'], 'tol': [1e-4], }
 ]
 
-def unpackHypers(dictInput):
-  items = sorted(dictInput.items())
 
-  if not items:
-    yield {}
-  else:
-    keys, values = zip(*items)
-    for v in product(*values):
-      params = dict(zip(keys,v))
-      yield params
+def unpackHypers(kwargs):
+  #borrowed from https://stackoverflow.com/questions/5228158/cartesian-product-of-a-dictionary-of-lists
+    keys = kwargs.keys()
+    vals = kwargs.values()
+    for instance in product(*vals):
+        yield dict(zip(keys, instance))
 
 # testInput =  [LogisticRegression, {'C': [0.5, 1.0, 1.5], 'solver': ['lbfgs', 'liblinear'], 'tol' : [1e-4, 1e-3, 1e-2]}]
 def DeathToGridSearch(searchList):
@@ -81,41 +79,26 @@ def DeathToGridSearch(searchList):
 # unpacking is passed to the classifer correctly
 
   for searchVar in searchList:
-    if len(searchVar) > 2:
-      raise Exception("Search list should have two inputs, a classifier, and a dictionary of hyper-parameters")
+    allHypers = list(unpackHypers(searchVar))
 
-    clf = searchVar[0]
-    hypers = searchVar[1]
-
-    for searchPar in unpackHypers(hypers):
-      for key, value in searchPar.items():
-        try:
-          res = run(clf, data, {f'{key}': value})
-        except Exception as e:
-          res = "Classifier {} failed with the following error:\n{}\nResuming Search".format(str(clf), e)
-
-        print(res)
-
-
-
-
-    # if searchVar[1]:
-    #   hyper = searchVar[1]
-    # else:
-    #     hyper = {}
-
-    # try:
-    #   # some classifiers might fail, try to run it and if failure continue
-    #   res = run(clf, data, hyper)
-    # except Exception as e:      
-    #   res = "Classifier {} failed with the following error:\n{}\nResuming Search".format(str(clf), e)
-    
-    # print(res)
+    for search in allHypers:
+          classifier = search.pop('clf', None) #if clf is a key pop it, return none otherwise
+          hypers = search
+          try:
+          # some classifiers might fail, try to run it and if failure continue
+            print('\n', classifier, hypers, '\n')
+            res = run(classifier, data, hypers)
+          except Exception as e:      
+            res = f"Classifier {classifier} failed with the following error:\n{e}\nResuming Search."
+        
+          print(res)
 
 DeathToGridSearch(testInput)
 
 #testing area
-# clfTest = [[SVC, {'C': [1.0, 0.5], 'kernel': ['rbf', 'linear'], 'tol': [1e-4] }]]
+clfTest = [
+  [SVC, {'C': [1.0, 0.5], 'kernel': ['rbf', 'linear'], 'tol': [1e-4] }]
+  ]
 
 
 # # [LogisticRegression, {'C': 1.0, 'solver': 'lbfgs', 'tol' : 1e-3}]
@@ -126,13 +109,12 @@ DeathToGridSearch(testInput)
 
 # clfsList = [RandomForestClassifier, LogisticRegression] 
 
-# test = clfTest[0][1]
+test = clfTest[0][1]
 
-
-
-vvar = unpackHypers(test)
-thisHyper = {}
-for x in vvar:
-  for k,v in x.items():
-    print({f'{k}':v})
+# def unpackHypers(kwargs):
+#   #borrowed from https://stackoverflow.com/questions/5228158/cartesian-product-of-a-dictionary-of-lists
+#     keys = kwargs.keys()
+#     vals = kwargs.values()
+#     for instance in product(*vals):
+#         yield dict(zip(keys, instance))
 
