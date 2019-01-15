@@ -5,7 +5,7 @@ from sklearn.model_selection import KFold
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn import datasets
-
+from itertools import product
 # adapt this code below to run your analysis
  
 # Due before live class 2
@@ -58,10 +58,22 @@ results = run(RandomForestClassifier, data, clf_hyper={})
 
 
 testInput = [
-[LogisticRegression, {'C': 1.0, 'solver': 'lbfgs', 'tol' : 1e-3}],
+[LogisticRegression, {'C': [1.0], 'solver': ['lbfgs'], 'tol' : [1e-3]}],
 [RandomForestClassifier, {}],
-[SVC, {'C': 1.1, 'kernel': 'rbf', 'tol': 1e-4, }]
+[SVC, {'C': [1.1, 0.5], 'kernel': ['rbf'], 'tol': [1e-4], }]
 ]
+
+def unpackHypers(dictInput):
+  items = sorted(dictInput.items())
+
+  if not items:
+    yield {}
+  else:
+    keys, values = zip(*items)
+    for v in product(*values):
+      params = dict(zip(keys,v))
+      yield params
+
 # testInput =  [LogisticRegression, {'C': [0.5, 1.0, 1.5], 'solver': ['lbfgs', 'liblinear'], 'tol' : [1e-4, 1e-3, 1e-2]}]
 def DeathToGridSearch(searchList):
 # input is a list of lists with the format [model, hyperParamterdict], ideally the hyperparameters will be 
@@ -73,34 +85,54 @@ def DeathToGridSearch(searchList):
       raise Exception("Search list should have two inputs, a classifier, and a dictionary of hyper-parameters")
 
     clf = searchVar[0]
+    hypers = searchVar[1]
 
-    if searchVar[1]:
-      hyper = searchVar[1]
-    else:
-        hyper = {}
+    for searchPar in unpackHypers(hypers):
+      for key, value in searchPar.items():
+        try:
+          res = run(clf, data, {f'{key}': value})
+        except Exception as e:
+          res = "Classifier {} failed with the following error:\n{}\nResuming Search".format(str(clf), e)
 
-    try:
-      # some classifiers might fail, try to run it and if failure continue
-      res = run(clf, data, hyper)
-    except Exception as e:      
-      res = "Classifier {} failed with the following error:\n{}\nResuming Search".format(str(clf), e)
+        print(res)
+
+
+
+
+    # if searchVar[1]:
+    #   hyper = searchVar[1]
+    # else:
+    #     hyper = {}
+
+    # try:
+    #   # some classifiers might fail, try to run it and if failure continue
+    #   res = run(clf, data, hyper)
+    # except Exception as e:      
+    #   res = "Classifier {} failed with the following error:\n{}\nResuming Search".format(str(clf), e)
     
-    print(res)
+    # print(res)
 
 DeathToGridSearch(testInput)
 
 #testing area
-clfTest = [SVC, {'C': 1.1, 'kernel': 'rbf', 'tol': 1e-4, }]
+# clfTest = [[SVC, {'C': [1.0, 0.5], 'kernel': ['rbf', 'linear'], 'tol': [1e-4] }]]
 
 
-# [LogisticRegression, {'C': 1.0, 'solver': 'lbfgs', 'tol' : 1e-3}]
+# # [LogisticRegression, {'C': 1.0, 'solver': 'lbfgs', 'tol' : 1e-3}]
 
-clf = clfTest[0]
-hyper = clfTest[1]
-run(clf, data, hyper)
+# clf = clfTest[0][0]
+# hyper = clfTest[0][1]
+# run(clf, data, hyper)
 
-clfsList = [RandomForestClassifier, LogisticRegression] 
+# clfsList = [RandomForestClassifier, LogisticRegression] 
 
-for clfs in clfsList:
-    results = run(clfs, data, clf_hyper={})
-    print(results)
+# test = clfTest[0][1]
+
+
+
+vvar = unpackHypers(test)
+thisHyper = {}
+for x in vvar:
+  for k,v in x.items():
+    print({f'{k}':v})
+
