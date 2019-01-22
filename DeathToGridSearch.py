@@ -15,9 +15,9 @@ from itertools import product
 # 
 #  
 #Due before live class 3
-# 2. expand to include larger number of classifiers and hyperparmater settings
-# 3. find some simple data
-# 4. generate matplotlib plots that will assist in identifying the optimal clf and parampters settings
+# 2. expand to include larger number of classifiers and hyperparmater settings #DONE
+# 3. find some simple data #IRIS DATA WILL BE USED DONE
+# 4. generate matplotlib plots that will assist in identifying the optimal clf and parampters settings. THIS SHOULD BE A METHOD.
  
 #Due before live class 4
 # 5. Please set up your code to be run and save the results to the directory that its executed from
