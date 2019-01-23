@@ -6,6 +6,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn import datasets
 from itertools import product
+import matplotlib.pyplot as plt
+import matplotlib
 # adapt this code below to run your analysis
  
 # Due before live class 2
@@ -52,7 +54,9 @@ def run(a_clf, data, clf_hyper={}):
     ret[ids]= {'clf': clf,
                'train_index': train_index,
                'test_index': test_index,
-               'accuracy': accuracy_score(L[test_index], pred)}
+               'accuracy': accuracy_score(L[test_index], pred),
+               'predictions': pred}
+
   return ret
  
 results = run(RandomForestClassifier, data, clf_hyper={})
@@ -94,6 +98,38 @@ def DeathToGridSearch(searchList):
           print(res)
 
 DeathToGridSearch(testInput)
+
+
+
+
+def plotResults(results_dict):
+  """ Takes a results dictionary from run(). Generates plots to help evaluation. Plots have
+  not yet been decided upon."""
+  truth_data = M[results[0]['test_index']]
+  truth_labels = L[results[0]['test_index']]
+  pred_labels = results[0]['predictions']
+  colors = ['b', 'g', 'r', 'c', 'm', 'y']
+
+
+  # If there are 2 dimensions the we can do 2D Scatter Plots.
+  if truth_data.ndim <= 2:
+    x_vals = truth_data[:,0]
+    y_vals = truth_data[:,1]
+    titles = ["Truth", "Prediction"]
+    labels= [truth_labels, pred_labels]
+
+    for title, label in zip(titles, labels):
+
+      for lab in range(len(set(label))):
+        this_color = colors[lab%len(colors)]
+        plt.scatter(x_vals, y_vals, c=this_color, label=lab)
+        plt.legend()
+        plt.title(title)
+        plt.show()
+    
+plotResults(results)
+
+
 
 #testing area
 clfTest = [
