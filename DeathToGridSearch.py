@@ -8,6 +8,7 @@ from sklearn import datasets
 from itertools import product
 import matplotlib.pyplot as plt
 import matplotlib
+from functools import reduce
 # adapt this code below to run your analysis
  
 # Due before live class 2
@@ -99,8 +100,12 @@ def DeathToGridSearch(searchList):
           cls_name = str(classifier).split(".")[-1] #this is where the actual classifer is in the class
           cls_name = cls_name.replace("'>","")
 
-          master_results[cls_name] = res
-
+          while True:
+            if cls_name in master_results.keys():
+              cls_name += str(1)
+            if not cls_name in master_results.keys():
+              master_results[cls_name] = res
+              break
 
   # find the best results
   def find_best_model():
@@ -109,12 +114,17 @@ def DeathToGridSearch(searchList):
 
     for k in master_results.keys():
       this_clf = master_results[k]
+      this_clf_accs = []
 
       for i in range(len(this_clf)):
-        if this_clf[i]['accuracy'] > temp_best_score:
-          temp_best_score = this_clf[i]['accuracy']
-          temp_best_model = this_clf[i]
-    
+          this_clf_accs.append(this_clf[i]['accuracy'])
+
+      avg_acc  = reduce(lambda x,y: x+y, this_clf_accs) / len(this_clf_accs)
+
+      if avg_acc > temp_best_score:
+        temp_best_score = avg_acc
+        temp_best_model = this_clf #the hypers should all be the same for each clf, keeping all info
+          
     return temp_best_model
 
   best_model = find_best_model()
