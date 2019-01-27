@@ -9,6 +9,8 @@ from itertools import product
 import matplotlib.pyplot as plt
 import matplotlib
 from functools import reduce
+from sklearn.metrics import roc_curve
+from sklearn.preprocessing import label_binarize
 # adapt this code below to run your analysis
  
 # Due before live class 2
@@ -189,30 +191,27 @@ def plotResults(results_dict, save_path = '/home/kyle/Documents/thomaskh522@gmai
 
 plotResults(my_results)
 
+def plot_roc_curves(data):
+  #first generate all false positive rates
+  fpr = dict()
+  tpr = dict()
+  roc_auc = dict()
+
+  y = label_binarize(data, classes = np.unique(data))
+  num_classes = y.shape[1]
+
+  for i in range(num_classes):
+    train_index = 
+    fpr[i], tpr[i] = roc_curve(M[test_index],  )
 
 
+t_index = my_results['SVC'][0]['test_index']
+pred = my_results['SVC'][0]['predictions']
 
+clf = my_results['LogisticRegression'][0]['clf']
+probs = clf.predict_proba(M[t_index])
+p = roc_curve(pred, probs[:,0])
 
-
-  # def model_scatter(results_dict)
-  #   truth_data = M[results[0]['test_index']]
-  #   truth_labels = L[results[0]['test_index']]
-  #   pred_labels = results[0]['predictions']
-  #   colors = ['b', 'g', 'r', 'c', 'm', 'y']
-
-
-  #   # If there are 2 dimensions the we can do 2D Scatter Plots.
-  #   if truth_data.ndim <= 2:
-  #     x_vals = truth_data[:,0]
-  #     y_vals = truth_data[:,1]
-  #     titles = ["Truth", "Prediction"]
-  #     labels= [truth_labels, pred_labels]
-
-  #     for title, label in zip(titles, labels):
-  #       plt.scatter(x_vals, y_vals, c=label, label=label)
-  #       plt.legend()
-  #       plt.title(title)
-  #       plt.show()
-
-    
-plotResults(results)
+fpr, tpr, thres = roc_curve(pred, probs[:,0])
+plt.plot(tpr)
+plt.show()
