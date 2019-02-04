@@ -6,6 +6,8 @@ import sys
 import numpy.lib.recfunctions as rfn
 import time
 import pandas as pd
+import operator
+
 
 
 
@@ -123,3 +125,34 @@ sum_subscriber_payment = np.sum(j_codes["SubscriberPaymentAmount"][in_network_in
 total_payments = sum_provider_payment + sum_subscriber_payment
 # 2443969.2915400006
 #      C. What are the top five J-codes based on the payment to providers?
+
+# first sort by payment provider
+sorted_j_codes = np.sort(j_codes, order='ProviderPaymentAmount')
+
+payment_dict = dict()
+
+for row in range(len(sorted_j_codes)):
+    p_code = sorted_j_codes['ProcedureCode'][row].decode()
+    value = sorted_j_codes['ProviderPaymentAmount'][row]
+    if p_code in payment_dict.keys():
+        payment_dict[p_code].append(value)
+    if not p_code in payment_dict.keys():
+        payment_dict[p_code] = []
+        payment_dict[p_code].append(value)
+
+for key in payment_dict.keys():
+    payment_dict[key] = functools.reduce((lambda x, y: x + y), payment_dict[key])
+
+sorted_payments = sorted(payment_dict.items(), key = operator.itemgetter(1), reverse = True)
+
+# TOP 5:
+sorted_payments[:5]
+# [('"J1745"', 434232.08058999985), ('"J0180"', 299776.560765), ('"J9310"', 168630.87357999998), ('"J3490"', 90249.91245000002), ('"J1644"', 81909.39601500018)]
+
+# 2. For the following exercises, determine the number of providers that were paid for at least one J-code. Use the J-code claims for these providers to complete the following exercises.
+
+#     A. Create a scatter plot that displays the number of unpaid claims (lines where the ‘Provider.Payment.Amount’ field is equal to zero) for each provider versus the number of paid claims.
+
+#     B. What insights can you suggest from the graph?
+
+#     C. Based on the graph, is the behavior of any of the providers concerning? Explain.
