@@ -42,6 +42,7 @@ def run(a_clf, data, clf_hyper={}):
                'train_index': train_index,
                'test_index': test_index,
                'accuracy': accuracy_score(L[test_index], pred),
+              #  'AP': average_precision_score(L[test_index], pred),
                'predictions': pred}
 
   return ret
@@ -139,7 +140,7 @@ def plotResults(results_dict, save_path = '/home/kyle/Documents/thomaskh522@gmai
       plt.plot(clf_accs)
       plt.title(f'{k} Accuracy Scores')
       plt.xlabel("Fold")
-      plt.ylabel("Accuracy")
+      plt.ylabel("Accuracy/Recall")
       # plt.show()
       plt.savefig(f'{save_path}{k}_Accuracy_Scores.png')
       plt.close()
