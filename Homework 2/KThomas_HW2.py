@@ -149,9 +149,11 @@ sorted_payments = sorted(payment_dict.items(), key = operator.itemgetter(1), rev
 sorted_payments[:5]
 # [('"J1745"', 434232.08058999985), ('"J0180"', 299776.560765), ('"J9310"', 168630.87357999998), ('"J3490"', 90249.91245000002), ('"J1644"', 81909.39601500018)]
 
-# 2. For the following exercises, determine the number of providers that were paid for at least one J-code. Use the J-code claims for these providers to complete the following exercises.
+# 2. For the following exercises, determine the number of providers that were paid for at least one J-code. 
+# Use the J-code claims for these providers to complete the following exercises.
 
-#     A. Create a scatter plot that displays the number of unpaid claims (lines where the ‘Provider.Payment.Amount’ field is equal to zero) for each provider versus the number of paid claims.
+#     A. Create a scatter plot that displays the number of unpaid claims (lines where the ‘Provider.Payment.Amount’ field is equal to zero) 
+# for each provider versus the number of paid claims.
 
 #     B. What insights can you suggest from the graph?
 
