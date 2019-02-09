@@ -8,6 +8,7 @@ import time
 import operator
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
+import pandas as pd
 
 
 
@@ -112,15 +113,32 @@ num_j_codes = len(j_codes_index)
 j_codes = CLAIMS[j_codes_index]
 names = j_codes.dtype.names
 
+###### PANDAS VALIDATION - NUMPY ANALYSIS IS CORRECT
+df_claims = pd.read_csv(hw_file)
+df_j_codes = df_claims[df_claims["Procedure.Code"].str.contains('J')]
+len(j_codes)
+# 51595
+######
 
-#      B. How much was paid for J-codes to providers for 'in network' claims?
+#  B. How much was paid for J-codes to providers for 'in network' claims?
 j_codes['InOutOfNetwork'] #I,O, and " ". I will assume that in network is I and everything else is out of network
 in_network_index = np.flatnonzero(np.core.defchararray.find(j_codes['InOutOfNetwork'], 'I'.encode() != -1))
 sum_provider_payment = np.sum(j_codes["ProviderPaymentAmount"][in_network_index])
 sum_subscriber_payment = np.sum(j_codes["SubscriberPaymentAmount"][in_network_index])
 total_payments = sum_provider_payment + sum_subscriber_payment
 # 2443969.2915400006
-#      C. What are the top five J-codes based on the payment to providers?
+
+##### PANDAS VALIDATION - different from numpy
+df_in_network = df_j_codes[df_j_codes["In.Out.Of.Network"].str.contains("I")]
+sum_in_network_provider = df_in_network['Provider.Payment.Amount'].sum()
+sum_in_network_sub = df_in_network['Subscriber.Payment.Amount']
+total_in_network = sum_in_network_provider + sum_in_network_sub
+total_in_network
+# 2442466.942055
+
+
+
+# C. What are the top five J-codes based on the payment to providers?
 
 # first sort by payment provider
 sorted_j_codes = np.sort(j_codes, order='ProviderPaymentAmount')
@@ -145,6 +163,17 @@ sorted_payments = sorted(payment_dict.items(), key = operator.itemgetter(1), rev
 sorted_payments[:5]
 # [('"J1745"', 434232.08058999985), ('"J0180"', 299776.560765), ('"J9310"', 168630.87357999998), ('"J3490"', 90249.91245000002), ('"J1644"', 81909.39601500018)]
 
+##### PANDAS VALIDATION - MATCHES NUMPY
+grouped_j_codes = df_j_codes.groupby(['Procedure.Code'])['Provider.Payment.Amount'].sum()
+sorted_grouped_j_codes = grouped_j_codes.sort_values(ascending = False)
+sorted_grouped_j_codes[:5]
+
+# Procedure.Code
+# J1745    434232.080590
+# J0180    299776.560765
+# J9310    168630.873580
+# J3490     90249.912450
+# J1644     81909.396015
 
 # 2. For the following exercises, determine the number of providers that were paid for at least one J-code. 
 # Use the J-code claims for these providers to complete the following exercises.
@@ -154,6 +183,11 @@ provider_gtr_zero = np.nonzero(j_codes["ProviderPaymentAmount"])
 provider_j_codes = j_codes[provider_gtr_zero]
 
 number_of_providers_paid = len(provider_j_codes)
+# 6313
+
+##### PANDAS VALIDATION - MATCHES NUMPY
+df_provider_gtf_zero = df_j_codes[df_j_codes['Provider.Payment.Amount'] > 0]
+len(df_provider_gtf_zero)
 # 6313
 
 #     A. Create a scatter plot that displays the number of unpaid claims (lines where the ‘Provider.Payment.Amount’ field is equal to zero) 
@@ -218,13 +252,76 @@ plt.show()
 plt.scatter(paid_dict.values(), not_paid_dict.values())
 plt.show()
 
+##### pandas validation - MATCHES NUMPY
+#     A. Create a scatter plot that displays the number of unpaid claims (lines where the ‘Provider.Payment.Amount’ field is equal to zero) 
+# for each provider versus the number of paid claims.
+df_unpaid = df_j_codes[df_j_codes["Provider.Payment.Amount"] == 0.0]
 
+paid_group = df_provider_gtf_zero.groupby(['Provider.ID']).agg(['count'])['V1']
+paid_group.columns = ["Paid"]
+unpaid_group = df_unpaid.groupby(['Provider.ID']).agg(['count'])['V1']
+unpaid_group.columns = ["Unpaid"]
+merged = pd.merge(paid_group, unpaid_group, on='Provider.ID', how='outer').fillna(0)
+merged.reset_index(inplace = True)
+
+fig = plt.figure()
+ax = fig.add_subplot(1,1,1)
+for p in merged['Provider.ID']:
+  ax.scatter(merged[merged['Provider.ID'] == p]['Paid'], merged[merged['Provider.ID'] == p]['Unpaid'], label=p)
+
+box = ax.get_position()
+ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+plt.title("Paid vs Unpaid J Code Quantities by Provide ID")
+plt.xlabel('Paid Quantity')
+plt.ylabel('Unpaid Quantity')
+ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+plt.show()
 
 
 #     B. What insights can you suggest from the graph?
+# Overall there are very few providers that tend to have a balance of paid vs unpaid j-codes.
 
 #     C. Based on the graph, is the behavior of any of the providers concerning? Explain.
+# Two of the providers have 0 payments, three providers have very few payments and lots of unpaid JCodes (FA0001387001, FA0001387002, FA0001389001).
 
+###################################################################3
+
+# 3. Consider all claim lines with a J-code.
+
+#      A. What percentage of J-code claim lines were unpaid?
+percent_unpaid = len(not_paid) / (len(provider_j_codes) + len(not_paid))
+percent_unpaid
+# 0.8776431824789224
+
+#      B. Create a model to predict when a J-code is unpaid. Explain why you choose the modeling approach.
+# Goal here to to predict when ‘Provider.Payment.Amount’ == 0. Will need to scrub the data a bit to make sure that
+# it play's nicely with SKLean.
+# Following some of Office Hours code
+paid = provider_j_codes.copy()
+
+new_dtype1 = np.dtype(not_paid.dtype.descr + [('IsUnpaid', '<i4')])
+new_dtype2 = np.dtype(paid.dtype.descr + [('IsUnpaid', '<i4')])
+
+Unpaid_Labeled = np.zeros(not_paid.shape, dtype=new_dtype1)
+Paid_Labeled = np.zeros(paid.shape, dtype=new_dtype2)
+
+# Copy data
+for lab in not_paid.dtype.names:
+  Unpaid_Labeled[lab] = not_paid[lab]
+
+for lab in paid.dtype.names:
+  Paid_Labeled[lab] = paid[lab]
+
+# Assing Paid vs Not paid
+Unpaid_Labeled['IsUnpaid'] = 1
+Paid_Labeled['IsUnpaid'] = 0
+
+
+
+
+#      C. How accurate is your model at predicting unpaid claims?
+
+#       D. What data attributes are predominately influencing the rate of non-payment?
 
 ###### TESTING #####
 # find j codes that have been paid, if the sum of the j codes is zero then no one was paid
