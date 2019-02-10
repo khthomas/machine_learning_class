@@ -161,21 +161,21 @@ class Model_Search:
     accuracy_plot_all()
 
 
-# if __name__ == "__main__":
-#   iris = datasets.load_iris()
-#   M = iris.data[:, :2] #taking the first two features, following example on sklearn website
-#   L = iris.target
-#   n_folds = 5
-#   data = (M, L, n_folds)
-#   save_path = "/home/kyle/Documents/thomaskh522@gmail.com/SMU/MachineLearning/machine_learning_class/model_results/"
+if __name__ == "__main__":
+  iris = datasets.load_iris()
+  M = iris.data[:, :2] #taking the first two features, following example on sklearn website
+  L = iris.target
+  n_folds = 5
+  data = (M, L, n_folds)
+  save_path = "/home/kyle/Documents/thomaskh522@gmail.com/SMU/MachineLearning/machine_learning_class/model_results/"
 
-#   testInput = [
-#     {'clf': [LogisticRegression], 'C': [1.0], 'solver': ['lbfgs'], 'tol' : [1e-3]},
-#     {'clf': [RandomForestClassifier]},
-#     {'clf': [SVC], 'C': [1.1, 0.5], 'kernel': ['rbf'], 'tol': [1e-4] }
-#   ]
+  testInput = [
+    {'clf': [LogisticRegression], 'C': [1.0], 'solver': ['lbfgs'], 'tol' : [1e-3]},
+    {'clf': [RandomForestClassifier]},
+    {'clf': [SVC], 'C': [1.1, 0.5], 'kernel': ['rbf'], 'tol': [1e-4] }
+  ]
 
 
-#   test = Model_Search(data=data)
-#   my_results, my_best_model = test.DeathToGridSearch(testInput)
-#   test.plotResults(my_results, save_path=save_path)
+  test = Model_Search(data=data)
+  my_results, my_best_model = test.DeathToGridSearch(testInput)
+  test.plotResults(my_results, save_path=save_path)
