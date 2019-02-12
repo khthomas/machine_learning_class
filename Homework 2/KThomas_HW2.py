@@ -186,7 +186,8 @@ ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 plt.show()
 
 #     B. What insights can you suggest from the graph?
-# Overall there are very few providers that tend to have a balance of paid vs unpaid j-codes.
+# Overall there are very few providers that tend to have a balance of paid vs unpaid j-codes. In fact most providers tend to have far 
+# more unpaid vs paid claims. 
 
 #     C. Based on the graph, is the behavior of any of the providers concerning? Explain.
 # Two of the providers have 0 payments, three providers have very few payments and lots of unpaid JCodes (FA0001387001, FA0001387002, FA0001389001).
@@ -198,7 +199,7 @@ plt.show()
 #      A. What percentage of J-code claim lines were unpaid?
 percent_unpaid = len(not_paid) / (len(provider_j_codes) + len(not_paid))
 percent_unpaid
-# 0.8776431824789224
+# 0.881087224911325
 
 #      B. Create a model to predict when a J-code is unpaid. Explain why you choose the modeling approach.
 # Goal here to to predict when ‘Provider.Payment.Amount’ == 0. Will need to scrub the data a bit to make sure that
@@ -262,6 +263,7 @@ def getHighCorrs(cutoff=0.5):
   return vars_output, corr_output
 
 num_vars_to_use, the_corrs = getHighCorrs(0.1) # "high" is relative here.
+num_vars_to_use.remove('MemberID') #this is unique to the individual and will not help new observations, but it is highly correlated
 
 # Next I want to do some feature reduction on the categroical variables
 # To start I want to find variables that do not have a high cardnality
@@ -291,7 +293,11 @@ L = np.array(Data['IsUnpaid'].tolist())
 
 le = LabelEncoder()
 
-what_is_this = le.fit_transform(Mcat[1])
+# Data2 = Data.copy()
+
+# for i in range(len(Data[cat_vars_to_use])):
+#   Data2[:,i] = le.fit_transform(Data2[:,i])
+
 
 for i in range(len(cat_vars_to_use)):
    Mcat2[:,i] = le.fit_transform(Mcat2[:,i])
@@ -319,6 +325,19 @@ search_models = [
 my_search = Model_Search(data=search_data)
 my_results, my_best_model = my_search.DeathToGridSearch(search_models)
 
+def find_avg_acc(model):
+  output = []
+  for x in range(len(model)):
+    acc = model[x]['accuracy']
+    output.append(acc)
+
+  avg_acc = sum(output) / len(output)
+  return(avg_acc)
+
+my_best_model_acc = find_avg_acc(my_best_model)
+my_best_model_acc
+
+
 save_path = '/home/kyle/Documents/thomaskh522@gmail.com/SMU/MachineLearning/machine_learning_class/Homework_2/Model_Outputs'
 
 my_search.plotResults(my_results, save_path=save_path)
@@ -328,29 +347,32 @@ my_search.plotResults(my_results, save_path=save_path)
 # for model selection keep in mind runtime
 # normalize continuous variables
 
+# B. Create a model to predict when a J-code is unpaid. Explain why you choose the modeling approach.
+# First I narrowed down the variables to use in the model. I did this by first discovering which numeric 
+# variables were the most correclated with the target variable. Then I found categorical variables which 
+# had relatively low cardnality (less than or equal to 20). I then ran all of this data through a custom
+# function that made in total 10 models. Mostly I used variants of Logistic regression and Random Forests 
+# so that I could understand variable importance. 
 
+# C. How accurate is your model at predicting unpaid claims?
 
+# The model that ended up performing the best was a random forest model with average accuracy of 0.999.
+# I am suspecious of the accuracy and am worried that there is information leak somewhere in the model.
 
+# D. What data attributes are predominately influencing the rate of non-payment?
+# I seem to have stripped out the names of the variables.... need to figure out how to get that information back in
+best_model_clf = my_best_model[0]['clf']
 
+#borrowed from sklean website
+important_features = best_model_clf.feature_importances_
 
+std = np.std([tree.feature_importances_ for tree in best_model_clf.estimators_], axis=0)
+indices = np.argsort(important_features)[::-1]
 
-
-# data_for_search = (Data, L, 5)
-# test_models =  [
-#     {'clf': [LogisticRegression], 'C': [1.0], 'solver': ['lbfgs'], 'tol' : [1e-3]},
-#     {'clf': [RandomForestClassifier]},
-#     {'clf': [SVC], 'C': [1.1, 0.5], 'kernel': ['rbf'], 'tol': [1e-4] }
-#   ]
-
-# dtg = Model_Search(data = data_for_search)
-
-# models, best_model = dtg.DeathToGridSearch(test_models)
-
-
-#   M = iris.data[:, :2] #taking the first two features, following example on sklearn website
-#   L = iris.target
-#   n_folds = 5
-#   data = (M, L, n_folds)
+# Print the feature ranking
+print("Feature ranking:")
+for f in range(M.shape[1]):
+    print("%d. feature %d (%f)" % (f + 1, indices[f], important_features[indices[f]]))
 
 
 
