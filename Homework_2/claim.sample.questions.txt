@@ -3,29 +3,60 @@ A medical claim is denoted by a claim number ('Claim.Number'). Each claim consis
 1. J-codes are procedure codes that start with the letter 'J'.
 
      A. Find the number of claim lines that have J-codes.
+     51029
 
      B. How much was paid for J-codes to providers for 'in network' claims?
-
+     2418603.6867250004
+     providers only 2418429.572825
+     
      C. What are the top five J-codes based on the payment to providers?
+     [('"J1745"', 434232.08058999985), 
+      ('"J0180"', 299776.560765), 
+      ('"J9310"', 168630.87357999998), 
+      ('"J3490"', 90249.91245000002), 
+      ('"J1644"', 81909.39601500018)]
 
 
 
 2. For the following exercises, determine the number of providers that were paid for at least one J-code. Use the J-code claims for these providers to complete the following exercises.
 
     A. Create a scatter plot that displays the number of unpaid claims (lines where the ‘Provider.Payment.Amount’ field is equal to zero) for each provider versus the number of paid claims.
+     See Attached Image (Q2A_Scatter.png)
 
     B. What insights can you suggest from the graph?
+     Overall there are very few providers that tend to have a balance of paid vs unpaid j-codes. In fact most providers tend to have far 
+     more unpaid vs paid claims. 
 
     C. Based on the graph, is the behavior of any of the providers concerning? Explain.
+     Two of the providers have 0 payments, three providers have very few payments and lots of unpaid JCodes (FA0001387001, FA0001387002, FA0001389001).
+     This implies that there are some providers taht are not paying out anything to their customers. There might be a reason for it though.
 
 
 
 3. Consider all claim lines with a J-code.
 
      A. What percentage of J-code claim lines were unpaid?
+     Approximately 88 percent (0.881087224911325)
 
      B. Create a model to predict when a J-code is unpaid. Explain why you choose the modeling approach.
+     First I narrowed down the variables to use in the model. I did this by first discovering which numeric 
+     variables were the most correclated with the target variable. Then I found categorical variables which 
+     had relatively low cardnality (less than or equal to 20). I then ran all of this data through a custom
+     function that made in total 10 models. Mostly I used variants of Logistic regression and Random Forests 
+     so that I could understand variable importance. 
 
      C. How accurate is your model at predicting unpaid claims?
+     Very accruate. The average model across the five folds of my best models was 99.9% accruate.
+     I am suspecious of the accuracy and am worried that there is information leak somewhere in the model.
+
 
       D. What data attributes are predominately influencing the rate of non-payment?
+      See the image Q3D_Feature_Importance.png for image. Also, there is a function called plot_feature_importance() 
+      where you can insert an int for the top X attributes that influence the model.
+
+      The top 5 attributes are:
+      1. ServiceCode_"IJV" (0.672505)
+      2. ProviderID_"FA0001774001" (0.044757)
+      3. RevenueCode_"0250" (0.029762)
+      4. NetworkID_"ITS000000004" (0.024498)
+      5. PriceIndex_"E" (0.019325)

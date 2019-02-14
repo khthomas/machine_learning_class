@@ -9,6 +9,8 @@ import operator
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+from sklearn.pipeline import Pipeline
+from textwrap import wrap
 
 # Model Imports
 from sklearn.ensemble import RandomForestClassifier
@@ -192,7 +194,10 @@ plt.show()
 #     C. Based on the graph, is the behavior of any of the providers concerning? Explain.
 # Two of the providers have 0 payments, three providers have very few payments and lots of unpaid JCodes (FA0001387001, FA0001387002, FA0001389001).
 
-###################################################################3
+###################################################################
+## QUESTION 3: WILL NEED TO RUN DeathToGridSearch Class (at bottom
+# of script) for this section to work properly.
+###################################################################
 
 # 3. Consider all claim lines with a J-code.
 
@@ -264,6 +269,9 @@ def getHighCorrs(cutoff=0.5):
 
 num_vars_to_use, the_corrs = getHighCorrs(0.1) # "high" is relative here.
 num_vars_to_use.remove('MemberID') #this is unique to the individual and will not help new observations, but it is highly correlated
+num_vars_to_use.remove('ClaimNumber') # this is unique to the indivdual and will not help new observations.
+num_vars_to_use.remove('GroupIndex') # Does not make sense to use this as a continuous variable, should be a categorical, high cardnality
+num_vars_to_use.remove('SubscriberIndex') # Does not make sense to use this as a continuous variable, should be a categorical, high cardnality
 
 # Next I want to do some feature reduction on the categroical variables
 # To start I want to find variables that do not have a high cardnality
@@ -285,11 +293,42 @@ def find_low_cards(num_unique = 20):
 
 cat_vars_to_use, cardnality = find_low_cards()
 
+# borrowed from Steven Millet
+blank_encode = '"na"'
+blank_encode = blank_encode.encode("latin-1")
+
+
+all_vars_for_model = cat_vars_to_use + num_vars_to_use
+
+out={}
+for col in cat_vars_to_use:
+    le = LabelEncoder()
+    temp = Data[col].copy()
+    temp = le.fit_transform(temp).reshape(-1,1)
+    out[col]={}
+    out[col]['data'] = temp
+    out[col]['mapping'] = dict(zip(range(1, len(le.classes_)+1),le.classes_))
+
+def build_feature_lookup():
+  output_list = []
+  for x in cat_vars_to_use:
+    this_mapping = out[x]['mapping']
+    for k in this_mapping.keys():
+      value = this_mapping[k]
+      append_value = f"{x}_{value.decode()}"
+      output_list.append(append_value)
+  
+  return output_list
+
+vars_for_importance = build_feature_lookup()
+vars_for_importance.append(num_vars_to_use[0])
+
 # new featuers
 Mcat2 = np.array(Data[cat_vars_to_use].tolist())
 Mnum2 = np.array(Data[num_vars_to_use].tolist())
 L = np.array(Data['IsUnpaid'].tolist())
 
+Test = Data[cat_vars_to_use].copy()
 
 le = LabelEncoder()
 
@@ -298,9 +337,11 @@ le = LabelEncoder()
 # for i in range(len(Data[cat_vars_to_use])):
 #   Data2[:,i] = le.fit_transform(Data2[:,i])
 
-
+my_classes = []
 for i in range(len(cat_vars_to_use)):
-   Mcat2[:,i] = le.fit_transform(Mcat2[:,i])
+  #  Mcat2[:,i] = le.fit_transform(Mcat2[:,i])
+  Test[:,i] = le.fit_transform(Test[:,i])
+  my_classes.append(le.classes_)  
 
 # Do one hot encoding
 ohe = OneHotEncoder(sparse=False)
@@ -355,12 +396,17 @@ my_search.plotResults(my_results, save_path=save_path)
 # so that I could understand variable importance. 
 
 # C. How accurate is your model at predicting unpaid claims?
-
-# The model that ended up performing the best was a random forest model with average accuracy of 0.999.
+#  Very accruate. The average model across the five folds of my best models was 99.9% accruate.
 # I am suspecious of the accuracy and am worried that there is information leak somewhere in the model.
 
 # D. What data attributes are predominately influencing the rate of non-payment?
-# I seem to have stripped out the names of the variables.... need to figure out how to get that information back in
+      # The top 5 attributes are:
+      # 1. ServiceCode_"IJV" (0.672505)
+      # 2. ProviderID_"FA0001774001" (0.044757)
+      # 3. RevenueCode_"0250" (0.029762)
+      # 4. NetworkID_"ITS000000004" (0.024498)
+      # 5. PriceIndex_"E" (0.019325)
+
 best_model_clf = my_best_model[0]['clf']
 
 #borrowed from sklean website
@@ -370,14 +416,33 @@ std = np.std([tree.feature_importances_ for tree in best_model_clf.estimators_],
 indices = np.argsort(important_features)[::-1]
 
 # Print the feature ranking
-print("Feature ranking:")
-for f in range(M.shape[1]):
-    print("%d. feature %d (%f)" % (f + 1, indices[f], important_features[indices[f]]))
+# print("Feature ranking:")
+# for f in range(M.shape[1]):
+#     print("%d. %s (%f)" % (f + 1, vars_for_importance[indices[f]], important_features[indices[f]]))
 
+# borrowed from https://scikit-learn.org/stable/auto_examples/ensemble/plot_forest_importances.html
+print("Feature ranking:")
+sorted_importance = []
+for f in indices:
+  print("%d. %s (%f)" % (f + 1, vars_for_importance[indices[f]], important_features[f]))
+  sorted_importance.append((vars_for_importance[indices[f]], important_features[f]))
+
+
+def plot_feature_importance(top_x_features=5):
+  temp_featuers = sorted_importance[:top_x_features]
+  plt.figure()
+  plt.title("Feature Importance")
+  for x in range(len(temp_featuers)):
+    label = '\n'.join(wrap(temp_featuers[x][0], 15))
+    plt.barh(label, temp_featuers[x][1], )
+  plt.tight_layout()
+  plt.show()
+
+plot_feature_importance(5)
 
 
 #############################
-# Death to Grid Search
+# Death to Grid Search Class
 #############################
 class Model_Search:
 
