@@ -21,8 +21,6 @@ people = {'Jane': {'willingness to travel': 1,
 
           }
 
-people = {}
-
 names  = ['Kyle', 'Thomas', 'George', 'Max', 'Mary', 'Martha', 'Tacitus', 'Emily', 'Ruth', 'Jane']
 cats = ['Close Distance', 'Desire for New Experience', 'Cost', 'American', 'Asian', 'Italian', 'Indian', 'Mexican', 'Hipster Points', 'Vegetarian']
 
@@ -71,10 +69,37 @@ M_people = np.array([list(people[p].values()) for p in people])
 
 # The most imporant idea in this project is the idea of a linear combination.
 # Informally describe what a linear combination is and how it will relate to our resturant matrix.
+# A linear combination is defined as "is an expression constructed from a set of terms by multiplying each term by a 
+# constant and adding the results" (or perhaps more intuitively scaling and adding the basis vectors) [Wikipedia]. 
+# it is a linear combination becuase if you hold one of the two scalers and let the other change freely your result with be a 
+# line. Sacling both of them lets you reach any point on the plane (For example, the span of most 2D vectors is all of 2D space).
+# In relation to our resturant example we will find the linear combination that results in a maximum value across all resturants 
+# and across all preferences. 
 
 # Choose a person and compute(using a linear combination) the top restaurant for them.  What does each entry in the resulting vector represent.
+# I will calculate the top resturant for Kyle.
+# The output vectors, called scores below, show my ranking of each resuturant based on my preference and the resturants features in realtion
+# to my preferences. The resturant with the highest value is my top choice, the resturant with the lowest value is my last choice.
+# Respectively these are: Curry Stop (top), Fish Market (last choice)
+
+kyle = M_people[0]
+type(kyle)
+
+np.matmul(kyle, M_resturants.T)
+
+def get_scores(person, rests_matrix, rest_names_list):
+    r_scores = np.matmul(person, rests_matrix.T)
+    output = dict(zip(rest_names_list, r_scores))
+    sorted_output = sorted(output.items(), key = lambda x: x[1], reverse=True)
+    return r_scores, output, sorted_output
+
+scores, kyle_favs, sorted_kyle = get_scores(kyle, M_resturants, rests)
+kyle_top_choce = sorted_kyle[0]
+kyle_last_choice = sorted_kyle[-1]
 
 # Next compute a new matrix (M_usr_x_rest  i.e. an user by restaurant) from all people.  What does the a_ij matrix represent?
+all_scores = np.matmul(M_people, M_resturants.T)
+all_scores, all_favs, sorted_all = get_scores(M_people, M_resturants, rests)
 
 # Sum all columns in M_usr_x_rest to get optimal restaurant for all users.  What do the entry’s represent?
 
