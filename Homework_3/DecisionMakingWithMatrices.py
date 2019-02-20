@@ -8,6 +8,8 @@
 # This process was thoughly investigated in the operation research community.  This approah can prove helpful on any number of decsion making problems that are currently not leveraging machine learning.
 
 import numpy as np
+import pickle
+from scipy.stats import rankdata
 
 # You asked your 10 work friends to answer a survey. They gave you back the following dictionary object.
 people = {'Jane': {'willingness to travel': 1,
@@ -43,15 +45,15 @@ people = make_people_dict(names, cats)
 
 # Next you collected data from an internet website. You got the following information.
 
-resturants  = {'flacos':{'distance' :
-                        'novelty' :
-                        'cost':
-                        'average rating':
-                        'cuisine':
-                        'vegetarian'
-                        }
+# resturants  = {'flacos':{'distance' :
+#                         'novelty' :
+#                         'cost':
+#                         'average rating':
+#                         'cuisine':
+#                         'vegetarian'
+#                         }
 
-}
+# }
 
 rests = ['Big Johns Pizza', 'Dames Chicken and Waffels', 'Pho King', 'Sandwhich Stop', 'Valu Buffet', 'Burger Fi', 'Fish Market', 'Curry Stop']
 
@@ -66,7 +68,12 @@ resturants = make_people_dict(rests, cats)
 M_resturants = np.array([list(resturants[r].values()) for r in rests])
 M_people = np.array([list(people[p].values()) for p in people])
 
+# if using pickle
+with open('/home/kyle_thomas/Documents/For_Others/ME/SMU/machine_learning_class/Homework_3/M_people', 'r') as f:
+    M_people = pickle.load(f)
 
+with open('/home/kyle_thomas/Documents/For_Others/ME/SMU/machine_learning_class/Homework_3/M_rests', 'r') as f:
+    M_resturants = pickle.dump(f)
 # The most imporant idea in this project is the idea of a linear combination.
 # Informally describe what a linear combination is and how it will relate to our resturant matrix.
 # A linear combination is defined as "is an expression constructed from a set of terms by multiplying each term by a 
@@ -98,12 +105,38 @@ kyle_top_choce = sorted_kyle[0]
 kyle_last_choice = sorted_kyle[-1]
 
 # Next compute a new matrix (M_usr_x_rest  i.e. an user by restaurant) from all people.  What does the a_ij matrix represent?
-all_scores = np.matmul(M_people, M_resturants.T)
-all_scores, all_favs, sorted_all = get_scores(M_people, M_resturants, rests)
+M_usr_x_rest = np.matmul(M_people, M_resturants.T)
+# This new martix represents each score by person an resturant
+# The rows are people, the columns are resturants
+# Assuming that indexing starts at 0:
+# So entry a_01 would be person = Kyle, resturant = ig Johns Pizza, and the value is the result the matricies multiple together. 
+# It represents the score of the perons preferences at that resturaunt.
+# i = people, k = resturanuts, a = score
+
 
 # Sum all columns in M_usr_x_rest to get optimal restaurant for all users.  What do the entry’s represent?
+sum_rests = M_usr_x_rest.sum(axis=0)
+top_rest_index = list(sum_rests).index(max(sum_rests))
+top_rest = rests[top_rest_index]
+top_rest
+# the analysis the best resturant was index 4 or Valu Buffet.
+
+
+# each summation represents the cumulative score of resturants for all peoples weights. According to the inputs when I ran
 
 # Now convert each row in the M_usr_x_rest into a ranking for each user and call it M_usr_x_rest_rank.   Do the same as above to generate the optimal resturant choice.
+# after talking to John what I need to do here is rank each persons perfernce from 1 to the number of resturants.
+# do it for each person, and then find the best value. Its a similar idea but a different scoring method.
+# M_usr_x_rest_rank = np.amax(M_usr_x_rest, axis=1) # this finds the max value per person
+M_usr_x_rest_rank = np.array( [rankdata(r) for r in M_usr_x_rest ] ) 
+sum_rests_rank = M_usr_x_rest_rank.sum(axis=0)
+top_rest_index_rank = list(sum_rests_rank).index(max(sum_rests_rank))
+top_rest_rank = rests[top_rest_index_rank]
+top_rest_rank
+
+# result is still Valu Buffet, but there are also ties in some of the rankings
+
+
 
 # Why is there a difference between the two?  What problem arrives?  What does represent in the real world?
 
@@ -116,8 +149,32 @@ all_scores, all_favs, sorted_all = get_scores(M_people, M_resturants, rests)
 # Should you split in two groups today?
 
 # Ok. Now you just found out the boss is paying for the meal. How should you adjust. Now what is best restaurant?
+# Intuitively, you remove the price component, will need to recalculate the rests matrix.
+cost_index = cats.index('Cost')
+#drop column == cost index from M_resturants
+M_resturants_no_cost = np.delete(M_resturants, cost_index, axis=1)
+M_people_no_cost = np.delete(M_people, cost_index, axis=1)
+
+
+top_cost_no_object = np.matmul(M_people_no_cost, M_resturants_no_cost.T)
+sum_rests_no_cost = top_cost_no_object.sum(axis=0)
+top_rest_index_no_cost = list(sum_rests_no_cost).index(max(sum_rests_no_cost))
+top_rest_no_cost = rests[top_rest_index_no_cost]
+top_rest_no_cost
+
+# Now the best resturany, when I ran this analysis the first time, is Big Johns Pizza
+
+
+
 
 # Tommorow you visit another team. You have the same restaurants and they told you their optimal ordering for restaurants.  Can you find their weight matrix?
+# you should be able to solve for it, I think there is a numpy built in.
 
 
+# PICKLING OBJECTS SO I GET THE SAME RESULTS.
+with open('/home/kyle_thomas/Documents/For_Others/ME/SMU/machine_learning_class/Homework_3/M_people', 'wb') as f:
+    pickle.dump(M_people, f)
+
+with open('/home/kyle_thomas/Documents/For_Others/ME/SMU/machine_learning_class/Homework_3/M_rests', 'wb') as f:
+    pickle.dump(M_resturants, f)
 
