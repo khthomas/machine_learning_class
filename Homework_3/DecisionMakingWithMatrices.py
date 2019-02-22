@@ -139,12 +139,18 @@ top_rest_rank
 
 
 # Why is there a difference between the two?  What problem arrives?  What does represent in the real world?
+# In my instance there is not a difference between the two. There is the problem of ties.
 
 # How should you preprocess your data to remove this problem.
+# I would not allow ties and perhaps limit the cumulative response that people can give.
 
 # Find user profiles that are problematic, explain why?
+# To do
 
 # Think of two metrics to compute the disatistifaction with the group.
+# Percent of people where the choice is in the bottom half of resturants
+# Delta between chosen resturant and top resturant
+# 
 
 # Should you split in two groups today?
 
