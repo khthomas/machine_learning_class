@@ -69,11 +69,19 @@ M_resturants = np.array([list(resturants[r].values()) for r in rests])
 M_people = np.array([list(people[p].values()) for p in people])
 
 # if using pickle
-with open('/home/kyle_thomas/Documents/For_Others/ME/SMU/machine_learning_class/Homework_3/M_people', 'r') as f:
+with open('/home/kyle_thomas/Documents/For_Others/ME/SMU/machine_learning_class/Homework_3/M_people', 'rb') as f:
     M_people = pickle.load(f)
 
-with open('/home/kyle_thomas/Documents/For_Others/ME/SMU/machine_learning_class/Homework_3/M_rests', 'r') as f:
-    M_resturants = pickle.dump(f)
+# Home laptop
+with open('/home/kyle/Documents/thomaskh522@gmail.com/SMU/MachineLearning/machine_learning_class/Homework_3/M_people', 'rb') as f:
+    M_people = pickle.load(f)
+
+with open('/home/kyle_thomas/Documents/For_Others/ME/SMU/machine_learning_class/Homework_3/M_rests', 'rb') as f:
+    M_resturants = pickle.load(f)
+
+with open('/home/kyle/Documents/thomaskh522@gmail.com/SMU/MachineLearning/machine_learning_class/Homework_3/M_rests', 'rb') as f:
+    M_resturants = pickle.load(f)
+
 # The most imporant idea in this project is the idea of a linear combination.
 # Informally describe what a linear combination is and how it will relate to our resturant matrix.
 # A linear combination is defined as "is an expression constructed from a set of terms by multiplying each term by a 
@@ -106,6 +114,7 @@ kyle_last_choice = sorted_kyle[-1]
 
 # Next compute a new matrix (M_usr_x_rest  i.e. an user by restaurant) from all people.  What does the a_ij matrix represent?
 M_usr_x_rest = np.matmul(M_people, M_resturants.T)
+
 # This new martix represents each score by person an resturant
 # The rows are people, the columns are resturants
 # Assuming that indexing starts at 0:
@@ -168,7 +177,7 @@ top_rest_index_no_cost = list(sum_rests_no_cost).index(max(sum_rests_no_cost))
 top_rest_no_cost = rests[top_rest_index_no_cost]
 top_rest_no_cost
 
-# Now the best resturany, when I ran this analysis the first time, is Big Johns Pizza
+# Now the best resturant, when I ran this analysis the first time, is Big Johns Pizza
 
 
 
@@ -176,6 +185,16 @@ top_rest_no_cost
 # Tommorow you visit another team. You have the same restaurants and they told you their optimal ordering for restaurants.  Can you find their weight matrix?
 # you should be able to solve for it, I think there is a numpy built in.
 
+# First simulate the results, I am going to make is square for this example
+random_results = np.random.random_integers(150, 500, size=(10,10))
+M_resturants_square = np.random.random_integers(1, 10, size=(10,10))
+testing_matrix = M_usr_x_rest.copy()
+
+
+
+# Now I need to solve for the weights between M_resturants and random_results
+# cannot use np.linalg.solve because my matrix are not square, nor should I assume they will be square
+new_people_weights = np.linalg.solve(M_resturants_square, random_results)
 
 # PICKLING OBJECTS SO I GET THE SAME RESULTS.
 with open('/home/kyle_thomas/Documents/For_Others/ME/SMU/machine_learning_class/Homework_3/M_people', 'wb') as f:
