@@ -186,10 +186,28 @@ top_rest_no_cost
 # you should be able to solve for it, I think there is a numpy built in.
 
 # First simulate the results, I am going to make is square for this example
-random_results = np.random.random_integers(150, 500, size=(10,10))
-M_resturants_square = np.random.random_integers(1, 10, size=(10,10))
-testing_matrix = M_usr_x_rest.copy()
+names_square = ["Abe", "Beth", "Carlos", "Danni"]
+cats_square = ["Yummy", "Cheap", "Close", "Drinks"]
+rests_square = ["Alpha", "Bravo", "Charlie", "Delta"]
 
+people_square = make_people_dict(names_square, cats_square)
+rests_sqr = make_people_dict(rests_square, cats_square)
+
+M_resturants_square = np.array([list(rests_sqr[r].values()) for r in rests_square])
+M_people_square = np.array([list(people_square[p].values()) for p in names_square])
+
+scores_square = np.matmul(M_people_square, M_resturants_square)
+
+# Can I get to the wieghts using: scores_square and M_resturants_square?
+solved_for_weights = np.linalg.solve(M_resturants_square, scores_square)
+solved_for_weights == M_people_square # FALSE
+
+inv_scores = np.linalg.inv(scores_square)
+using_inverse_for_weights = np.matmul(inv_scores, M_resturants_square)
+using_inverse_for_weights == scores_square
+
+inv_rests_square = np.linalg.inv(M_resturants_square)
+using_inverse_rests = np.matmul(inv_rests_square, scores_square)
 
 
 # Now I need to solve for the weights between M_resturants and random_results
