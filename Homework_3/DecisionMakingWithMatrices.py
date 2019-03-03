@@ -10,6 +10,8 @@
 import numpy as np
 import pickle
 from scipy.stats import rankdata
+import matplotlib.pyplot as plt
+
 
 # You asked your 10 work friends to answer a survey. They gave you back the following dictionary object.
 people = {'Jane': {'willingness to travel': 1,
@@ -68,12 +70,12 @@ M_people = np.array([list(people[p].values()) for p in people])
 with open('/home/kyle_thomas/Documents/For_Others/ME/SMU/machine_learning_class/Homework_3/M_people', 'rb') as f:
     M_people = pickle.load(f)
 
+with open('/home/kyle_thomas/Documents/For_Others/ME/SMU/machine_learning_class/Homework_3/M_rests', 'rb') as f:
+    M_resturants = pickle.load(f)
+
 # Home laptop
 with open('/home/kyle/Documents/thomaskh522@gmail.com/SMU/MachineLearning/machine_learning_class/Homework_3/M_people', 'rb') as f:
     M_people = pickle.load(f)
-
-with open('/home/kyle_thomas/Documents/For_Others/ME/SMU/machine_learning_class/Homework_3/M_rests', 'rb') as f:
-    M_resturants = pickle.load(f)
 
 with open('/home/kyle/Documents/thomaskh522@gmail.com/SMU/MachineLearning/machine_learning_class/Homework_3/M_rests', 'rb') as f:
     M_resturants = pickle.load(f)
@@ -117,13 +119,28 @@ kyle_last_choice = sorted_kyle[-1]
 # Next compute a new matrix (M_usr_x_rest  i.e. an user by restaurant) from all people.  What does the a_ij matrix represent?
 #################################################################################################################################
 M_usr_x_rest = np.matmul(M_people, M_resturants.T)
-
 # This new martix represents each score by person an resturant
 # The rows are people, the columns are resturants
 # Assuming that indexing starts at 0:
 # So entry a_01 would be person = Kyle, resturant = ig Johns Pizza, and the value is the result the matricies multiple together. 
 # It represents the score of the perons preferences at that resturaunt.
 # i = people, k = resturanuts, a = score
+
+# plot the results to see if we can find anything intersting, using pandas for ease of use, all
+# analysis for homework is done in numpy
+# plot by resturaunt
+import pandas as pd
+df_mat = pd.DataFrame(M_usr_x_rest, columns=rests, index=names)
+df_mat.plot.bar(figsize = (15,6), legend=False)
+plt.grid(zorder=0)
+plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
+plt.show()
+
+# plot by person
+df_mat.T.plot.bar(figsize = (15,6), legend=False)
+plt.grid(zorder=0)
+plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
+plt.show()
 
 #################################################################################################################################
 # Sum all columns in M_usr_x_rest to get optimal restaurant for all users.  What do the entry’s represent?
@@ -170,21 +187,119 @@ top_rest_rank
 # preferences that are troublesome. For example, having one vegitarian in a group of people who love steak # houses can really cause 
 # problems. 
 
+# After ploting the results I see that Ruth has a high preference for many resturants and Mary has low preferences for all resturants.
+# Mary bascially hates all resutrants except for the Fish Market. It seems that people could try to game the system and give weights
+# that only help certain resturants, while harming others.
+
+
+# please note that I plotted in pandas just because it is much easier to do plotting this way 
+# and makes managing the labels much easier. All of the matrix multiplication and setting up was
+# done in numpy
+import pandas as pd
+df_mat = pd.DataFrame(M_usr_x_rest, columns=rests, index=names)
+df_mat.plot.bar(figsize = (15,6), legend=False)
+plt.grid(zorder=0)
+plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
+plt.show()
+
+# plot by person
+df_mat.T.plot.bar(figsize = (15,6), legend=False)
+plt.grid(zorder=0)
+plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
+plt.show()
+
 #######################################################################
 # Think of two metrics to compute the disatistifaction with the group.
 ########################################################################
-# Percent of people where the chosen resturant is in the bottom half of prefered reasturants.
 # Delta between chosen resturant and top resturant
+def calc_dis_sat_by_max_distance(array_obj, index_top_score):
+    dis_sat_diff = []
 
+    for x in range(len(array_obj)):
+        top_score = array_obj[x][index_top_score]
+        personal_best = max(array_obj[x])
+        diff = abs(top_score - personal_best)
+        dis_sat_diff.append(diff)
+    
+    return dis_sat_diff
+
+disatistifaction = calc_dis_sat_by_max_distance(M_usr_x_rest, top_rest_index)
+people_disat = dict(zip(names, disatistifaction))
+people_disat
+
+# Percent of people where the chosen resturant is in the bottom half of prefered reasturants.
+def calc_dis_by_bottom_half(ranked_array_obj, index_top_score):
+    people_dissat = 0
+
+    for x in range(len(ranked_array_obj)):
+        num_choices = len(ranked_array_obj[x])
+        persons_pref_of_chosen_rest = ranked_array_obj[x][index_top_score]
+
+        if persons_pref_of_chosen_rest < (num_choices/2):
+            people_dissat+=1
+    
+    percent_dis_sat = people_dissat / len(ranked_array_obj)
+    return percent_dis_sat
+
+percent_dissat = calc_dis_by_bottom_half(M_usr_x_rest_rank, top_rest_index)
+percent_dissat
+
+# based on this metric no-one is unhappy. So maybe it is not the best metric, or maybe it is. If 
+# anyone is dissatisfied then they should go elsewhere?
 #######################################################################
 # Should you split in two groups today?
 #######################################################################
+# Yes, based on one of the dissatisfaction metics (delta between chosen and their top choice) it would
+# make sense for Emily, Martha, Max, Tacitus, and Thomas to go to value buffet as their dissatisfaction
+# is either 0 or below 10. Everyone else can run through the exercise again and make a new conclusion.
+# For example it looks like Rtuh and George might consider splitting off and going to Big John's Pizza.
+
 
 #################################################################################################################################
-# Ok. Now you just found out the boss is paying for the meal. How should you adjust. Now what is best restaurant?
-#################################################################################################################################
-# Intuitively, you remove the price component, will need to recalculate the rests matrix.
-cost_index = cats.index('Cost')
+# Ok. Now you just found out thnames_square = ["Abe", "Beth", "Carlos", "Danni"]
+cats_square = ["Yummy", "Cheap", "Close", "Drinks"]
+rests_square = ["Alpha", "Bravo", "Charlie", "Delta"]
+
+people_square = make_people_dict(names_square, cats_square)
+rests_sqr = make_people_dict(rests_square, cats_square)
+
+M_resturants_square = np.array([list(rests_sqr[r].values()) for r in rests_square])
+M_people_square = np.array([list(people_square[p].values()) for p in names_square])
+
+scores_square = np.matmul(M_people_square, M_resturants_square)w should you adjust. Now what is best restaurant?
+###############################names_square = ["Abe", "Beth", "Carlos", "Danni"]
+cats_square = ["Yummy", "Cheap", "Close", "Drinks"]
+rests_square = ["Alpha", "Bravo", "Charlie", "Delta"]
+
+people_square = make_people_dict(names_square, cats_square)
+rests_sqr = make_people_dict(rests_square, cats_square)
+
+M_resturants_square = np.array([list(rests_sqr[r].values()) for r in rests_square])
+M_people_square = np.array([list(people_square[p].values()) for p in names_square])
+
+scores_square = np.matmul(M_people_square, M_resturants_square)#################################################################
+# Intuitively, you remove the pnames_square = ["Abe", "Beth", "Carlos", "Danni"]
+cats_square = ["Yummy", "Cheap", "Close", "Drinks"]
+rests_square = ["Alpha", "Bravo", "Charlie", "Delta"]
+
+people_square = make_people_dict(names_square, cats_square)
+rests_sqr = make_people_dict(rests_square, cats_square)
+
+M_resturants_square = np.array([list(rests_sqr[r].values()) for r in rests_square])
+M_people_square = np.array([list(people_square[p].values()) for p in names_square])
+
+scores_square = np.matmul(M_people_square, M_resturants_square)lculate the rests matrix.
+cost_index = cats.index('Cost')names_square = ["Abe", "Beth", "Carlos", "Danni"]
+cats_square = ["Yummy", "Cheap", "Close", "Drinks"]
+rests_square = ["Alpha", "Bravo", "Charlie", "Delta"]
+
+people_square = make_people_dict(names_square, cats_square)
+rests_sqr = make_people_dict(rests_square, cats_square)
+
+M_resturants_square = np.array([list(rests_sqr[r].values()) for r in rests_square])
+M_people_square = np.array([list(people_square[p].values()) for p in names_square])
+
+scores_square = np.matmul(M_people_square, M_resturants_square)
 #drop column == cost index from M_resturants
 M_resturants_no_cost = np.delete(M_resturants, cost_index, axis=1)
 M_people_no_cost = np.delete(M_people, cost_index, axis=1)
@@ -203,7 +318,10 @@ top_rest_no_cost
 #################################################################################################################################
 # Tommorow you visit another team. You have the same restaurants and they told you their optimal ordering for restaurants.  Can you find their weight matrix?
 #################################################################################################################################
-# I would think that this is solvable.
+# If they give rankings then it is impossible. There is more than one possible weight matrix that would result in the rankings since
+# the rankings are simple enumerations.
+
+# However, if given a score. I would think that this is solvable.
 # I have been unable to find the weights, either I am doing something wrong, or the problem is not solvable
 # I have been looking things up online, and it seems like it is only solvable with a square matrix. Even when
 # I try with a square matrix, I do not get the results I expect.
@@ -237,6 +355,10 @@ using_inverse_rests = np.matmul(inv_rests_square, scores_square)
 # cannot use np.linalg.solve because my matrix are not square, nor should I assume they will be square
 new_people_weights = np.linalg.solve(M_resturants_square, random_results)
 
+# Solving after consulting with others, still not the values I was expecting, I am getting negative
+# values.
+group2_inferred, residuals, rank, s  = np.linalg.lstsq(M_resturants_square,scores_square)
+group2_inferred
 
 #################################################################################################################################
 # PICKLING OBJECTS SO I GET THE SAME RESULTS.
