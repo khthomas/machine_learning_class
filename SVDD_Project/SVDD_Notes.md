@@ -44,6 +44,13 @@ A and B are constants which are unfortunately not that easy to calculate. """
 
 ## Papers:
 
+### Support Vector Data Description
+The OG paper that started it all
+* Outlier detection
+* Unbalanced classificaiton problems (one class is very well sampled and the other is not)
+* Data set comparisons. 
+* Start at the center of the data, and expand the radius of the hyper sphere until all of the data is contained within the sphere.
+
 ### A Revisit to Support Vector Data Description (https://www.csie.ntu.edu.tw/~cjlin/papers/svdd.pdf)
 * method for outlier detection
 * There are some things that may lead to improper use of SVDD
@@ -60,6 +67,16 @@ A and B are constants which are unfortunately not that easy to calculate. """
 
 ### Kernel Methods: http://pub.ist.ac.at/~chl/papers/lampert-fnt2009.pdf 
 "An intuitive way for outlier or anomaly detection is to estimate the density of data points in the feature space. Samples in regions of high density are typical, where samples in low density are not. However, density estimation in high dimensional spaces is a notoriously difficult problem.
+
+
+### Fast Invremental SVDD Learning Algorithm with the Gaussian Kernel
+* First introduced in 2004
+* "Used in domains where the majority of data belong to a single class, or when one of the classes is significantly undersampled"
+* "builds a flexible boundry around the target class data; this data boundary is characterized by observations that are designated as support vectors."
+* No assumptions about the distribution of outliers is necessary to implement SVDD, nor does it need to know about the distribution of the data.
+* Support vectors are used to define the boundry of the data. If data is within this boundry it is normal, if not, it is abnormal.
+* "The simplest form of a boundary is a sphere
+https://arxiv.org/pdf/1709.00139.pdf
 
 ## Github projects 
 1. https://github.com/benmack/oneClass/blob/master/notebooks/oneClassIntro.ipynb
